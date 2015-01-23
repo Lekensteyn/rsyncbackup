@@ -1,0 +1,48 @@
+# completion file for scripts/do-backup
+
+_do_backup_sources() {
+    local cmd
+
+    # eval for tilde expansion
+    eval "cmd=$1"
+
+    type "$cmd" &>/dev/null || return
+
+    COMPREPLY=( $(compgen -W "$("$cmd" sources | awk '/^[^#]/ { print $2 }')" \
+        -- "$cur") )
+}
+
+_do_backup() {
+    local cur prev words cword
+    _init_completion || return
+
+    if [[ $cword == 1 ]]; then
+        COMPREPLY=( $(compgen -W 'sources printcmd testrsync mount umount
+        dobackup' -- "$cur") )
+        return 0
+    fi
+
+    _get_first_arg
+
+    case $arg in
+    sources)
+        ;;
+    printcmd)
+        _do_backup_sources "$1"
+        ;;
+    testrsync)
+        _do_backup_sources "$1"
+        ;;
+    dobackup)
+        _do_backup_sources "$1"
+        ;;
+    mount)
+        ;;
+    umount)
+        ;;
+    esac
+
+    return 0
+}
+
+complete -F _do_backup do-backup
