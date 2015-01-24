@@ -418,6 +418,19 @@ init_vars() {
     rsync_options+=(--delete-excluded)
 }
 
+_error_handler() {
+    local rc=$? file=$1 lineno=$2 originline=$3
+    echo " *** Command exited at line $originline with $rc"
+    printf ' %s:%d ' "$file" $lineno
+    sed -n ${lineno}p <"$file"
+    return $rc
+}
+
+set_traps() {
+    set -E
+    trap '_error_handler "${BASH_SOURCE[0]}" ${BASH_LINENO[0]} $LINENO' ERR
+}
+
 main() {
     local cmd= cfgfile name
     cfgfile=$(dirname "$(readlink -f "$0")")/.backup-config
@@ -455,6 +468,7 @@ main() {
     umask 022
     init_config "$cfgfile"
     init_vars
+    set_traps
 
     case $cmd in
     sources)
