@@ -218,6 +218,8 @@ _rsync() {
         return 1
     fi
 
+    # No need to keep fsck lost+found directories.
+    local_rsync_options+=(--exclude=/lost+found)
     # Apply filter rules if any.
     if [ -e "$excluderulesdir/$src" ]; then
         local_rsync_options+=(--exclude-from="$excluderulesdir/$src")
