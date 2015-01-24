@@ -175,9 +175,17 @@ do_unlock() {
 }
 
 do_mount() {
-    local mount_options dm_name
+    local mount_options dm_name rc=0
     if ! do_unlock; then
         echo "Failed to unlock LUKS container."
+        return 1
+    fi
+
+    fs_is_mounted || rc=$?
+    if [ $rc -eq 0 ]; then
+        return 0 # Already mounted, nothing to do
+    elif [ $rc -ne 2 ]; then
+        # Failed to determine whether device is mounted or not.
         return 1
     fi
 
