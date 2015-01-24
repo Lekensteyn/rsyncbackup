@@ -87,11 +87,6 @@ source_is_available() {
 }
 
 ### Utilities (independent of config)
-# Maps UUID $1 to the blockdev
-blockdev_from_uuid() {
-    local uuid=$1
-}
-
 # Echoes the DM name (dm-X) matching the block device.
 # @blockdev: path such as /dev/sdb1 or /dev/disk/by-uuid/...
 # Returns failure if LUKS device is not mounted.
