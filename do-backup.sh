@@ -266,6 +266,37 @@ _rsync() {
         "$srcdir" "$destdir"
 }
 
+# Ensures that the "CURRENT" backup directory is OK for snapshotting.
+# @source: source subvolume.
+_btrfs_presync() {
+    local source=${1%/}
+    # If there is no such entry, we can safely create it.
+    if [ ! -e "$source" ]; then
+        RUN btrfs subvolume create "$source"
+        return
+    fi
+
+    if [ ! -d "$source" ]; then
+        echo "$source: not a directory!"
+        return 1
+    fi
+
+    # There is already an entry. Assume that this is a btrfs partition and check
+    # whether the inode number equals 256 (first inode number of a btrfs
+    # subvolume tree).
+    if [[ "$(stat -c%i "$source")" != 256 ]]; then
+        echo "$source: not a btrfs subvolume. Convert it with:"
+        echo "mv $source ${source}.old &&"
+        echo "btrfs subvolume create ${source} &&"
+        echo "cp --reflink ${source}.old/* ${source}/ &&"
+        echo "rm -rf ${source}"
+        echo "# with coreutils after 8.23, you can replace cp+rm by:"
+        echo "mv ${source}.old/* ${source}/"
+        return 1
+    fi
+    return 0
+}
+
 # Creates a read-only snapshot for the given subvolume.
 # @source: source subvolume.
 # @dest: destination subvolume. Missing parents will be created first.
@@ -302,6 +333,8 @@ do_sync() {
             continue
         fi
 
+        [ -n "$rsync_dry_run" ] ||
+        _btrfs_presync "$destdir"
         _rsync "$rsync_dry_run" "$src" "$srcdir" "$destdir/"
         [ -n "$rsync_dry_run" ] ||
         _btrfs_snapshot "$destdir" "$snapshotdestdir"
