@@ -28,7 +28,7 @@ _do_backup() {
 
     if [ -z "$arg" ]; then
         COMPREPLY=( $(compgen -W \
-            '-c -n sources testrsync mount umount dobackup' -- "$cur") )
+            '-c -n -v sources testrsync mount umount dobackup' -- "$cur") )
         return 0
     fi
 

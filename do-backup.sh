@@ -3,11 +3,8 @@ set -e -u
 
 ### Utilities (dependent on config)
 RUN() {
-    if $JUST_PRINT; then
-        echo "$@"
-    else
-        "$@"
-    fi
+    ! $run_echo || echo "$@"
+    ! $run_exec || "$@"
 }
 
 # Check whether all required dependencies are installed
@@ -277,8 +274,9 @@ print_usage() {
 Usage: $0 [options] command [source..]
 
 Valid options are:
-  -n            Dry-run, print the commands without executing.
   -c FILE       Use config file FILE instead of .backup-config (in program dir).
+  -n            Dry-run, print the commands without executing.
+  -v            Verbose output, print commands as they are executed.
 
 Commands:
   sources       Print all possible backup sources.
@@ -329,7 +327,6 @@ init_vars() {
     fs_blockdev=/dev/disk/by-uuid/$fs_UUID
     use_sources=()
     snapshot_suffix=$(date +%Y%m%d)
-    JUST_PRINT=false
     ## rsync options
     # -a --archive
     # -v --verbose
@@ -350,13 +347,21 @@ init_vars() {
 main() {
     local cmd= cfgfile name
     cfgfile=$(dirname "$(readlink -f "$0")")/.backup-config
+    # Configure the RUN function (default hide command line, but exec it)
+    run_echo=false
+    run_exec=true
 
     # Options and command parsing
     while [ $# -gt 0 ]; do
         case $1 in
         -n)
             shift
-            JUST_PRINT=true
+            run_echo=true
+            run_exec=false
+            ;;
+        -v)
+            shift
+            run_echo=true
             ;;
         -c)
             shift
