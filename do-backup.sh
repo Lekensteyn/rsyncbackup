@@ -290,7 +290,7 @@ _btrfs_snapshot() {
 # Syncs sources to target. Assumes that target is mounted.
 # @rsync_opts: extra rsync options (empty or "-n")
 do_sync() {
-    local rsync_opts=$1 src srcdir destdir snapshotdestdir
+    local rsync_dry_run=$1 src srcdir destdir snapshotdestdir
 
     # For each source, sync stuff and create a snapshot.
     for src in "${use_sources[@]}"; do
@@ -307,7 +307,8 @@ do_sync() {
             continue
         fi
 
-        _rsync "$rsync_opts" "$src" "$srcdir" "$destdir/"
+        _rsync "$rsync_dry_run" "$src" "$srcdir" "$destdir/"
+        [ -n "$rsync_dry_run" ] ||
         _btrfs_snapshot "$destdir" "$snapshotdestdir"
     done
 }
