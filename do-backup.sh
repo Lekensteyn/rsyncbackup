@@ -403,6 +403,7 @@ init_vars() {
     ## rsync options
     # -a --archive
     # -v --verbose
+    # -i --itemize-changes
     # -A --acls
     # -X --xattrs
     # -x --one-file-system
@@ -410,7 +411,7 @@ init_vars() {
     # -n --dry-run
     # --numeric-ids
     # -y --fuzzy # more efficient for basing changes on local directory
-    rsync_options=(-avAXxH --numeric-ids)
+    rsync_options=(-aviAXxH --numeric-ids)
     # btrfs optimizations (--no-whole-file enables delta-transfer algo)
     rsync_options+=(--delete-before --inplace --no-whole-file)
     # They are excluded for a reason right?
