@@ -111,6 +111,44 @@ blockdev_to_dm() {
     return 1
 }
 
+# Checks if the backup filesystem is already mounted.
+# Returns 0 (success) if mounted, 2 if the block device is not mounted, 1
+# (failure) if the block device is mounted elsewhere or if the mount point got
+# occupied by something else.
+fs_is_mounted() {
+    local fs_devno devno
+
+    # Filesystem major/minor is empty if nothing is mounted.
+    if ! fs_devno=$(mountpoint -qd "$fs_mountpoint"); then
+        return 2 # Not mounted
+    fi
+
+    # BTRFS can consist of multiple devices, so the major/minor cannot be
+    # trivially compared.
+    if [[ $fs_type == btrfs ]]; then
+        if [ -e "/sys/fs/btrfs/$fs_UUID" ]; then
+            # Mountpoint is occupied and btrfs filesystem is loaded. Assume (it
+            # is not checked) that the filesystem is mounted at $fs_mountpoint.
+            return 0
+        else
+            # Something else got mounted!
+            return 2
+        fi
+    fi
+
+    # Find the devno for the mountpoint. If there is one, check for the device.
+    if ! devno=$(mountpoint -qx "$fs_blockdev"); then
+        # Device is unavailable, maybe it is not unlocked yet?
+        return 2 # Assume unmounted
+    fi
+    if [[ $fs_devno != $devno ]]; then
+        echo "Something else got mounted on $fs_mountpoint!"
+        return 1
+    fi
+    # OK, device is already mounted.
+    return 0
+}
+
 ### Commands
 # Unlocks the LUKS blockdev
 do_unlock() {
@@ -165,16 +203,12 @@ do_mount() {
 }
 
 do_umount() {
-    local fs_devno devno
-    # Find the devno for the mountpoint. If there is none, the filesystem is not
-    # mounted so return with unmounted assumption.
-    fs_devno=$(mountpoint -qd "$fs_mountpoint") || return 0
-    # If the blockdevice is suddenly gone, assume that it does not need to be
-    # unmounted anymore.
-    devno=$(mountpoint -qx "$fs_blockdev") || return 0
-
-    if [[ $fs_devno != $devno ]]; then
-        echo "Something else got mounted on $fs_mountpoint!"
+    local rc=0
+    fs_is_mounted || rc=$?
+    if [ $rc -eq 2 ]; then
+        # Device is not mounted, success!
+        return 0
+    elif [ $rc -ne 0 ]; then
         return 1
     fi
 
