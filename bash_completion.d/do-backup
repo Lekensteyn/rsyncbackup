@@ -1,4 +1,4 @@
-# completion file for scripts/do-backup
+# completion file for do-backup
 
 _do_backup_sources() {
     local cmd
@@ -8,7 +8,7 @@ _do_backup_sources() {
 
     type "$cmd" &>/dev/null || return
 
-    COMPREPLY=( $(compgen -W "$("$cmd" sources | awk '/^[^#]/ { print $2 }')" \
+    COMPREPLY=( $(compgen -W "$("$cmd" sources | awk '/^[^#]/ { print $1 }')" \
         -- "$cur") )
 }
 
@@ -16,19 +16,24 @@ _do_backup() {
     local cur prev words cword
     _init_completion || return
 
-    if [[ $cword == 1 ]]; then
-        COMPREPLY=( $(compgen -W 'sources printcmd testrsync mount umount
-        dobackup' -- "$cur") )
+    # "Options"
+    case $prev in
+    -c)
+        _filedir
         return 0
-    fi
+        ;;
+    esac
 
     _get_first_arg
 
+    if [ -z "$arg" ]; then
+        COMPREPLY=( $(compgen -W \
+            '-c -n sources testrsync mount umount dobackup' -- "$cur") )
+        return 0
+    fi
+
     case $arg in
     sources)
-        ;;
-    printcmd)
-        _do_backup_sources "$1"
         ;;
     testrsync)
         _do_backup_sources "$1"
@@ -46,3 +51,4 @@ _do_backup() {
 }
 
 complete -F _do_backup do-backup
+# vim: set ft=sh:
