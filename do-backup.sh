@@ -258,7 +258,7 @@ _rsync() {
     # No need to keep fsck lost+found directories.
     local_rsync_options+=(--exclude=/lost+found)
     # Apply filter rules if any.
-    if [ -e "$excluderulesdir/$src" ]; then
+    if [ -n "$excluderulesdir" -a -e "$excluderulesdir/$src" ]; then
         local_rsync_options+=(--exclude-from="$excluderulesdir/$src")
     fi
 
@@ -388,6 +388,9 @@ init_config() {
     # Enables the --enable-discards option for cryptsetup and the discard option
     # for mount. WARNING: may leak information for encrypted partitions.
     enableTRIM=false
+
+    # Directory to find files containing rsync exclusion filters.
+    excluderulesdir=
 
     . "$(readlink -f "$1")"
 }
