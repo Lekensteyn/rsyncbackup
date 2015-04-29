@@ -23,6 +23,10 @@ sanity_check() {
         echo "Only btrfs is supported at the moment!"
         rc=1
     fi
+    if [ -n "$excluderulesdir" -a ! -d "$excluderulesdir" ]; then
+        echo "excluderulesdir $excluderulesdir is not an existing directory"
+        rc=1
+    fi
     return $rc
 }
 
