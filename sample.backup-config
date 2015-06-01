@@ -31,6 +31,7 @@ backup_sources['Root']='//'
 #backup_sources['Etc']='//etc'
 
 # Directory containing exclusion rule files for each source.
-excluderulesdir=$HOME/rsync-excl.d
+# Use an absolute path (and not $HOME) since this could change when using sudo.
+excluderulesdir=/home/user/rsync-excl.d
 
 # Ignore this, it is used to force syntax highlighting in vim: set ft=sh:
