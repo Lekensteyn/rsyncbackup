@@ -1,0 +1,36 @@
+# .backup-config - example configuration for syncing folders to a(n encrypted)
+# btrfs filesystem.
+#
+# See function "init_config" in do-backup.sh for more options.
+
+# If luks_UUID is non-empty, an encrypted block device (partition) is assumed.
+#
+# These UUIDs can be found by looking in /dev/disk/by-uuid/ once the device is
+# unlocked ("decrypted") and mounted:
+#   a0becda8-1af5-4767-9df0-c5a21508eaff -> ../../sdb1 <-- external disk
+#   e33dd512-9d4e-4852-9fa0-bd0e7689455d -> ../../dm-1 <-- unlocked device
+#
+# or by executing "sudo blkid":
+#   /dev/sdb1: UUID="a0becda8-1af5-4767-9df0-c5a21508eaff" TYPE="crypto_LUKS"
+#   /dev/mapper/luks-a0becda8-1af5-4767-9df0-c5a21508eaff:
+#       UUID="e33dd512-9d4e-4852-9fa0-bd0e7689455d" TYPE="btrfs"
+luks_UUID=e33dd512-9d4e-4852-9fa0-bd0e7689455d
+fs_UUID=a0becda8-1af5-4767-9df0-c5a21508eaff
+fs_type=btrfs
+
+# Assume following mounts:
+#   /dev/sda1 on /
+#   /dev/sda1 on /boot
+# Then create three groups which gets synced only if mounted:
+#   /boot   -> Boot (mountpoint /boot)
+#   /home   -> Home (mountpoint /)
+#   /       -> Root (mountpoint /)
+backup_sources['Boot']='/boot//'
+backup_sources['Home']='//home'
+backup_sources['Root']='//'
+#backup_sources['Etc']='//etc'
+
+# Directory containing exclusion rule files for each source.
+excluderulesdir=$HOME/rsync-excl.d
+
+# Ignore this, it is used to force syntax highlighting in vim: set ft=sh:
