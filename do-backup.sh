@@ -38,7 +38,7 @@ set_sources_filter() {
 
     for src; do
         # Catch dangerous names such as "..", "sub/dir" or "foo*"
-        if ! [[ "$src" =~ ^[a-zA-Z0-9]+$ ]]; then
+        if ! [[ "$src" =~ ^[a-zA-Z0-9-]+$ ]]; then
             echo "Configuration error: invalid source name $src"
             return 1
         fi
@@ -479,6 +479,8 @@ main() {
 
     case $cmd in
     sources)
+        # Sanity-check sources configuration
+        set_sources_filter
         # Print all sources as is
         {
             echo "#Name Location"
@@ -512,6 +514,7 @@ main() {
         echo "Unknown command"
         print_usage
         sanity_check || :
+        set_sources_filter || :
         return 1
         ;;
     esac
