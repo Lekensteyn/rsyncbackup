@@ -372,9 +372,9 @@ init_config() {
     local cfgfile=$1
 
     # UUID of LUKS partition that needs to be unlocked (empty if there are none)
-    luks_UUID=
+    declare -ga luks_UUID
     # UUID of the actual filesystem to store backups
-    fs_UUID=
+    declare -ga fs_UUID
     # Filesystem type (btrfs, ext4, etc.)
     fs_type=btrfs
     # Location to mount the backup filesystem on (TODO: auto-detect?)
@@ -397,6 +397,34 @@ init_config() {
     excluderulesdir=
 
     . "$(readlink -f "$1")"
+}
+
+# Resolve the list of devices in "luks_UUID" and "fs_UUID" to a single target.
+resolve_backup_device() {
+    local i luks_UUIDx fs_UUIDx valid_index=
+
+    for i in "${!fs_UUID[@]}"; do
+        luks_UUIDx="${luks_UUID[i]-}"
+        fs_UUIDx="${fs_UUID[i]}"
+
+        [ -e "/dev/disk/by-uuid/$fs_UUIDx" ] ||
+        [ -n "$luks_UUIDx" -a -e "/dev/disk/by-uuid/$luks_UUIDx" ] || continue
+
+        if [ -n "$valid_index" ]; then
+            echo "Multiple backup disks are found, but only one can be used."
+            echo "Disconnect some disks or disable them in your configuration."
+            return 1
+        fi
+        valid_index=$i
+    done
+
+    if [ -z "$valid_index" ]; then
+        echo "Cannot find backup disk, is it connected?"
+        return 1
+    fi
+
+    luks_UUID="${luks_UUID[valid_index]-}"
+    fs_UUID="${fs_UUID[valid_index]}"
 }
 
 # Initialize vars for commands
@@ -474,6 +502,7 @@ main() {
     # Initialize state
     umask 022
     init_config "$cfgfile"
+    resolve_backup_device
     init_vars
     set_traps
 

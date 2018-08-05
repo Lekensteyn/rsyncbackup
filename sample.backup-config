@@ -18,8 +18,14 @@ luks_UUID=e33dd512-9d4e-4852-9fa0-bd0e7689455d
 fs_UUID=a0becda8-1af5-4767-9df0-c5a21508eaff
 fs_type=btrfs
 
+# Example configuration for multiple disks (only one of them can be connected).
+#luks_UUID[0]=e33dd512-9d4e-4852-9fa0-bd0e7689455d
+#fs_UUID[0]=a0becda8-1af5-4767-9df0-c5a21508eaff
+#luks_UUID[1]=2f7575dd-4e8a-40f0-97a9-f478fadf048a
+#fs_UUID[1]=000830f6-8607-4703-8a5e-7e549416f773
+
 # Assume following mounts:
-#   /dev/sda1 on /
+#   /dev/sda2 on /
 #   /dev/sda1 on /boot
 # Then create three groups which gets synced only if mounted:
 #   /boot   -> Boot (mountpoint /boot)

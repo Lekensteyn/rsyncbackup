@@ -49,7 +49,7 @@ Create a btrfs partition on it:
 Locate the partition identifier using `sudo blkid` and add it to the backup
 configuration. Example blkid output:
 
-   /dev/sdc1: UUID="da66d110-9119-43a1-bedf-ef797cc685fa" TYPE="btrfs"
+    /dev/sdc1: UUID="da66d110-9119-43a1-bedf-ef797cc685fa" TYPE="btrfs"
 
 The corresponding backup configuration line:
 
@@ -122,7 +122,7 @@ partition as follows:
     sudo cryptsetup luksOpen /dev/sdb1 backup
 
     # Finally format the plaintext layer
-    mkfs.btrfs /dev/mapper/backup
+    sudo mkfs.btrfs /dev/mapper/backup
 
 As for the backup configuration, you additionally have to set the `luks_UUID`
 variable. If the `sudo blkid` output looks like this:
@@ -135,6 +135,31 @@ then use this:
 
     luks_UUID=e33dd512-9d4e-4852-9fa0-bd0e7689455d
     fs_UUID=a0becda8-1af5-4767-9df0-c5a21508eaff
+
+## Multiple backup disks
+If you have multiple backup disks, you can specify a list of them:
+
+    luks_UUID[0]=e33dd512-9d4e-4852-9fa0-bd0e7689455d
+    fs_UUID[0]=a0becda8-1af5-4767-9df0-c5a21508eaff
+    luks_UUID[1]=2f7575dd-4e8a-40f0-97a9-f478fadf048a
+    fs_UUID[1]=000830f6-8607-4703-8a5e-7e549416f773
+
+At any point, only one of these disks may be present. An error is printed
+otherwise. Numbers have no special meaning except for matching a `fs_UUID` with
+`luks_UUID`. Example:
+
+    luks_UUID[2018]=e33dd512-9d4e-4852-9fa0-bd0e7689455d
+    fs_UUID[2018]=a0becda8-1af5-4767-9df0-c5a21508eaff
+    # The following two lines are commented out because the disk is broken.
+    #luks_UUID[2016]=2f7575dd-4e8a-40f0-97a9-f478fadf048a
+    #fs_UUID[2016]=000830f6-8607-4703-8a5e-7e549416f773
+    # Unencrypted backup target (note: no corresponding luks_UUID is set).
+    fs_UUID[2001]=2fa585a8-455a-4587-ad5c-722109bb33eb
+
+This feature is intended to support a backup strategy where you rotate through
+multiple disks and have independent copies to each of them. This makes it easier
+to handle offsite backups and to safeguard against catastrophic data loss in
+case your system explodes while a backup is in progress to a single disk.
 
 ## Backup structure
 The backup storage is mounted at `/mnt` (or whatever is specified by the
