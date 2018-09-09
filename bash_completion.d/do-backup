@@ -4,16 +4,16 @@ _do_backup_sources() {
     local cmd
 
     # eval for tilde expansion
-    eval "cmd=$1"
+    eval "cmd=$1"; shift
 
     type "$cmd" &>/dev/null || return
 
-    COMPREPLY=( $(compgen -W "$("$cmd" sources | awk '/^[^#]/ { print $1 }')" \
+    COMPREPLY=( $(compgen -W "$("$cmd" "$@" sources | awk '/^[^#]/ { print $1 }')" \
         -- "$cur") )
 }
 
 _do_backup() {
-    local i arg cur prev words cword
+    local i cmd_args=() arg cur prev words cword
     _init_completion || return
 
     # "Options"
@@ -26,7 +26,10 @@ _do_backup() {
 
     for (( i=1; i < COMP_CWORD; i++ )); do
         case "${COMP_WORDS[i]}" in
-            -c) ((i+=1)) ;;
+            -c)
+                ((i+=1))
+                cmd_args+=(-c "${COMP_WORDS[i]}")
+                ;;
             -*) ;;
             *)  arg="${COMP_WORDS[i]}"; break ;;
         esac
@@ -42,10 +45,10 @@ _do_backup() {
     sources)
         ;;
     testrsync)
-        _do_backup_sources "$1"
+        _do_backup_sources "$1" "${cmd_args[@]}"
         ;;
     dobackup)
-        _do_backup_sources "$1"
+        _do_backup_sources "$1" "${cmd_args[@]}"
         ;;
     mount)
         ;;
