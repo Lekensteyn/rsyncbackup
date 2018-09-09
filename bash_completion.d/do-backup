@@ -13,7 +13,7 @@ _do_backup_sources() {
 }
 
 _do_backup() {
-    local cur prev words cword
+    local i arg cur prev words cword
     _init_completion || return
 
     # "Options"
@@ -24,11 +24,17 @@ _do_backup() {
         ;;
     esac
 
-    _get_first_arg
+    for (( i=1; i < COMP_CWORD; i++ )); do
+        case "${COMP_WORDS[i]}" in
+            -c) ((i+=1)) ;;
+            -*) ;;
+            *)  arg="${COMP_WORDS[i]}"; break ;;
+        esac
+    done
 
     if [ -z "$arg" ]; then
         COMPREPLY=( $(compgen -W \
-            '-c -n -v sources testrsync mount umount dobackup' -- "$cur") )
+            '-c -n -v -h sources testrsync mount umount dobackup' -- "$cur") )
         return 0
     fi
 
