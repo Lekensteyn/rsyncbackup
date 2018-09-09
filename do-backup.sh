@@ -354,6 +354,7 @@ Valid options are:
   -c FILE       Use config file FILE instead of .backup-config (in program dir).
   -n            Dry-run, print the commands without executing.
   -v            Verbose output, print commands as they are executed.
+  -h            Print this help.
 
 Commands:
   sources       Print all possible backup sources.
@@ -400,6 +401,7 @@ init_config() {
 }
 
 # Resolve the list of devices in "luks_UUID" and "fs_UUID" to a single target.
+# Sets 'luks_blockdev' and 'fs_blockdev' on success.
 resolve_backup_device() {
     local i luks_UUIDx fs_UUIDx valid_index=
 
@@ -425,14 +427,17 @@ resolve_backup_device() {
 
     luks_UUID="${luks_UUID[valid_index]-}"
     fs_UUID="${fs_UUID[valid_index]}"
+
+    luks_blockdev=/dev/disk/by-uuid/$luks_UUID
+    fs_blockdev=/dev/disk/by-uuid/$fs_UUID
 }
 
 # Initialize vars for commands
 init_vars() {
     # commands
     # init vars for commands
-    luks_blockdev=/dev/disk/by-uuid/$luks_UUID
-    fs_blockdev=/dev/disk/by-uuid/$fs_UUID
+    luks_blockdev=
+    fs_blockdev=
     use_sources=()
     snapshot_suffix=$(date +%Y%m%d)
     ## rsync options
@@ -489,6 +494,10 @@ main() {
             shift
             cfgfile=$1; shift
             ;;
+        -h)
+            print_usage
+            exit
+            ;;
         -*)
             break
             ;; # Unrecognized option
@@ -502,7 +511,6 @@ main() {
     # Initialize state
     umask 022
     init_config "$cfgfile"
-    resolve_backup_device
     init_vars
     set_traps
 
@@ -521,20 +529,24 @@ main() {
         ;;
     testrsync)
         sanity_check
+        resolve_backup_device
         set_sources_filter "$@"
         do_mount
         do_sync -n
         ;;
     mount)
         sanity_check
+        resolve_backup_device
         do_mount
         ;;
     umount)
         sanity_check
+        resolve_backup_device
         do_umount && do_lock
         ;;
     dobackup)
         sanity_check
+        resolve_backup_device
         set_sources_filter "$@"
         do_mount
         do_sync ''
@@ -543,6 +555,7 @@ main() {
         echo "Unknown command"
         print_usage
         sanity_check || :
+        resolve_backup_device || :
         set_sources_filter || :
         return 1
         ;;
