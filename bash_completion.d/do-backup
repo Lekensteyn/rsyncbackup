@@ -1,19 +1,23 @@
 # completion file for do-backup
 
 _do_backup_sources() {
-    local cmd
+    local cmd config args=()
 
     # eval for tilde expansion
-    eval "cmd=$1"; shift
+    printf -v cmd %q "$1"
+    printf -v config %q "$2"
+    eval "cmd=${cmd/#\\\~/\~}"
+    eval "config=${config/#\\\~/\~}"
 
     type "$cmd" &>/dev/null || return
+    [ -z "$config" ] || args+=(-c "$config")
 
-    COMPREPLY=( $(compgen -W "$("$cmd" "$@" sources | awk '/^[^#]/ { print $1 }')" \
-        -- "$cur") )
+    COMPREPLY=( $(compgen -W "$("$cmd" "${args[@]}" sources |
+        awk '/^[^#]/ { print $1 }')" -- "$cur") )
 }
 
 _do_backup() {
-    local i cmd_args=() arg cur prev words cword
+    local i config arg cur prev words cword
     _init_completion || return
 
     # "Options"
@@ -28,7 +32,7 @@ _do_backup() {
         case "${COMP_WORDS[i]}" in
             -c)
                 ((i+=1))
-                cmd_args+=(-c "${COMP_WORDS[i]}")
+                config="${COMP_WORDS[i]}"
                 ;;
             -*) ;;
             *)  arg="${COMP_WORDS[i]}"; break ;;
@@ -45,10 +49,10 @@ _do_backup() {
     sources)
         ;;
     testrsync)
-        _do_backup_sources "$1" "${cmd_args[@]}"
+        _do_backup_sources "$1" "$config"
         ;;
     dobackup)
-        _do_backup_sources "$1" "${cmd_args[@]}"
+        _do_backup_sources "$1" "$config"
         ;;
     mount)
         ;;
